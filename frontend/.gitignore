@@ -25,7 +25,7 @@ dist-ssr
 
 # Vite cache
 .vite/
-
+.vite/deps
 # Common frontend ignores
 node_modules/
 dist/

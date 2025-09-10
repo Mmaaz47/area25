@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Vite cache
+.vite/
+
+# Common frontend ignores
+node_modules/
+dist/

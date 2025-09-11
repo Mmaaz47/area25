@@ -4,8 +4,7 @@ import { useMemo } from 'react'
 import { getCategories } from '../../store/categories'
 import { ProductCard } from '../../components/ProductCard'
 
-const validCategories = ['Home Furniture', 'Home Decor', 'Lightings', 'Rugs', 'Office Furniture'] as const
-type Category = typeof validCategories[number]
+// dynamic categories are used; remove hardcoded types
 
 export function CategoryPage() {
   const { category } = useParams()

@@ -4,7 +4,7 @@ import { ProductCard } from '../../components/ProductCard'
 import { useStorageSignal } from '../../hooks/useStorageSignal'
 
 export function BookmarksPage() {
-  const version = useStorageSignal('bookmarks:update', getBookmarksCount)
+  useStorageSignal('bookmarks:update', getBookmarksCount)
   const ids = new Set(getBookmarks())
   const products = getAllProducts().filter(p => ids.has(p.id))
   return (

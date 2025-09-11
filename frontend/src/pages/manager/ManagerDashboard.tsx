@@ -109,21 +109,21 @@ function Editor({ product, onCancel, onSave }: { product: Product, onCancel: () 
 
   return (
     <div style={{ border: '1px solid #ddd', borderRadius: 8, padding: 12, marginBottom: 16 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
-        <input placeholder="Price" type="number" value={price} onChange={e => setPrice(parseFloat(e.target.value || '0'))} />
-        <select value={category} onChange={e => setCategory(e.target.value)}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+        <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} style={{ minHeight: 36, width: '100%' }} />
+        <input placeholder="Price" type="number" value={price} onChange={e => setPrice(parseFloat(e.target.value || '0'))} style={{ minHeight: 36, width: '100%' }} />
+        <select value={category} onChange={e => setCategory(e.target.value)} style={{ minHeight: 36, width: '100%' }}>
           {getCategories().map(c => <option key={c}>{c}</option>)}
         </select>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input placeholder="New category" value={newCategory} onChange={e => setNewCategory(e.target.value)} />
-          <button type="button" onClick={() => { if (newCategory.trim()) { addCategory(newCategory); setCategory(newCategory.trim()); setNewCategory('') } }}>Add</button>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <input placeholder="New category" value={newCategory} onChange={e => setNewCategory(e.target.value)} style={{ minHeight: 36, flex: '1 1 180px' }} />
+          <button type="button" style={{ minHeight: 36, flex: '0 0 auto' }} onClick={() => { if (newCategory.trim()) { addCategory(newCategory); setCategory(newCategory.trim()); setNewCategory('') } }}>Add</button>
         </div>
-        <textarea placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} />
+        <textarea placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} style={{ width: '100%', minHeight: 80 }} />
       </div>
-      <div style={{ marginTop: 12 }}>
-        <button onClick={() => onSave({ id: product.id, title, price, description, category, images })}>Save</button>
-        <button onClick={onCancel} style={{ marginLeft: 8 }}>Cancel</button>
+      <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button style={{ minHeight: 40 }} onClick={() => onSave({ id: product.id, title, price, description, category, images })}>Save</button>
+        <button onClick={onCancel} style={{ marginLeft: 0, minHeight: 40, background: '#fff', color: '#111', border: '1px solid #ddd' }}>Cancel</button>
       </div>
       <div style={{ marginTop: 12 }}>
         <ImagesManager productId={product.id} images={images} onChange={setImages} />
@@ -144,13 +144,13 @@ function CategoryManager() {
     <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 12, marginBottom: 16, background: '#fff' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
         <strong>Categories</strong>
-        <select value={selected} onChange={e => setSelected(e.target.value)}>
+        <select value={selected} onChange={e => setSelected(e.target.value)} style={{ minHeight: 36 }}>
           <option value="">Select</option>
           {categories.map(c => <option key={c}>{c}</option>)}
         </select>
-        <input placeholder="New name" value={name} onChange={e => setName(e.target.value)} />
-        <button type="button" onClick={() => { if (selected && name.trim()) { renameCategory(selected, name); setSelected(name.trim()); setName(''); refresh() } }}>Rename</button>
-        <button type="button" onClick={() => { if (selected && confirm('Delete category and keep products unchanged?')) { deleteCategory(selected); setSelected(''); refresh() } }} style={{ background: '#fff', color: '#111', border: '1px solid #ddd' }}>Delete</button>
+        <input placeholder="New name" value={name} onChange={e => setName(e.target.value)} style={{ minHeight: 36, flex: '1 1 180px' }} />
+        <button type="button" style={{ minHeight: 36 }} onClick={() => { if (selected && name.trim()) { renameCategory(selected, name); setSelected(name.trim()); setName(''); refresh() } }}>Rename</button>
+        <button type="button" onClick={() => { if (selected && confirm('Delete category and keep products unchanged?')) { deleteCategory(selected); setSelected(''); refresh() } }} style={{ background: '#fff', color: '#111', border: '1px solid #ddd', minHeight: 36 }}>Delete</button>
       </div>
       <div style={{ marginTop: 8, color: '#6b7280', fontSize: 12 }}>Deleting a category does not remove products; their category label will remain until edited.</div>
     </div>

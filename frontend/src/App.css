@@ -75,7 +75,15 @@
   .nav { gap: 4px; position: relative; }
   .nav-tabs .brand { min-width: auto; padding: 10px 8px; font-size: 1rem; flex: 1; }
   .desktop-only { display: none !important; }
-  .menu-btn { margin-left: auto; border: 1px solid var(--border); background: #fff; height: 36px; width: 44px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
+  .hamburger { margin-left: auto; border: 1px solid var(--border); background: #fff; height: 36px; width: 44px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; position: relative; }
+  .hamburger span { position: absolute; width: 22px; height: 2px; background: #111; transition: transform .2s ease, opacity .2s ease; }
+  .hamburger span:nth-child(1) { transform: translateY(-6px); }
+  .hamburger span:nth-child(2) { }
+  .hamburger span:nth-child(3) { transform: translateY(6px); }
+  .hamburger.open span:nth-child(1) { transform: rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: rotate(-45deg); }
+  .mobile-overlay { position: fixed; inset: 56px 0 0 0; background: rgba(0,0,0,0.3); }
   .mobile-dropdown { position: absolute; top: 56px; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-top: none; display: none; flex-direction: column; z-index: 20; }
   .mobile-dropdown.open { display: flex; }
   .mobile-dropdown .tab { border-right: none; border-top: 1px solid var(--border); justify-content: flex-start; }

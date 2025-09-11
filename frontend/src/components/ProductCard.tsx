@@ -38,11 +38,11 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
         <div style={{ fontWeight: 700 }}>{product.title}</div>
         <div style={{ opacity: 0.9, marginBottom: 8 }}>{product.price.toLocaleString()} SAR</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={handleAdd} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button onClick={handleAdd} style={{ display: 'flex', alignItems: 'center', gap: 6, minHeight: 36 }}>
             {added ? <FiCheck /> : <FiShoppingCart />} {added ? 'Added' : 'Add'}
           </button>
-          <button onClick={handleBookmark} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', color: bookmarked ? '#dc2626' : '#111', border: '1px solid #ddd' }}>
+          <button onClick={handleBookmark} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', color: bookmarked ? '#dc2626' : '#111', border: '1px solid #ddd', minHeight: 36 }}>
             <FiBookmark color={bookmarked ? '#dc2626' : undefined} /> {bookmarked ? 'Saved' : 'Save'}
           </button>
         </div>

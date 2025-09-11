@@ -34,7 +34,7 @@ export function ManagerLogin() {
     <div style={{ padding: 16, display: 'grid', placeItems: 'center' }}>
       <div style={{ width: '100%', maxWidth: 420, background: '#fff', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.06)', padding: 20 }}>
         <h2 style={{ marginTop: 0 }}>Manager Login</h2>
-        <p style={{ marginTop: 4, color: 'var(--muted-text)' }}>Use demo credentials: <strong>admin / admin</strong></p>
+        {/* Removed demo credential hint for security */}
         {notice && <div style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', padding: 8, borderRadius: 8, marginBottom: 8 }}>{notice}</div>}
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12 }}>
           <input placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} />

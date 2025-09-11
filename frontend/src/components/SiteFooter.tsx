@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 
 export function SiteFooter() {
   return (
-    <footer style={{ marginTop: 40, borderTop: '1px solid var(--border)', padding: '24px 0', color: 'var(--muted-text)' }}>
+    <footer style={{ marginTop: 40, borderTop: '1px solid var(--border)', padding: '24px 16px', color: 'var(--muted-text)' }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16 }}>
         <section>
           <h4 style={{ margin: '0 0 8px 0', color: 'var(--text)' }}>About</h4>

@@ -72,7 +72,11 @@
 /* Mobile tweaks */
 @media (max-width: 640px) {
   #root { padding: 0 0 1rem 0; }
-  .nav { gap: 4px; }
-  .nav-tabs .tab, .nav-tabs .brand { min-width: auto; padding: 10px 8px; font-size: 0.9rem; }
-  .nav-tabs .brand { min-width: 180px; }
+  .nav { gap: 4px; position: relative; }
+  .nav-tabs .brand { min-width: auto; padding: 10px 8px; font-size: 1rem; flex: 1; }
+  .desktop-only { display: none !important; }
+  .menu-btn { margin-left: auto; border: 1px solid var(--border); background: #fff; height: 36px; width: 44px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; }
+  .mobile-dropdown { position: absolute; top: 56px; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-top: none; display: none; flex-direction: column; z-index: 20; }
+  .mobile-dropdown.open { display: flex; }
+  .mobile-dropdown .tab { border-right: none; border-top: 1px solid var(--border); justify-content: flex-start; }
 }

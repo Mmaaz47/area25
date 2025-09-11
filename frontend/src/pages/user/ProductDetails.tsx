@@ -24,7 +24,14 @@ export function ProductDetails() {
       <Link to="/">← Back</Link>
       <h2 style={{ marginTop: 12 }}>{product.title}</h2>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-        <div style={{ aspectRatio: '1/1', background: '#f6f6f6', borderRadius: 6 }} />
+        <div style={{ position: 'relative', aspectRatio: '1/1', background: '#f6f6f6', borderRadius: 6, overflow: 'hidden' }}>
+          {product.images && product.images.length > 0 ? (
+            <img src={product.images[0]} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : null}
+          <span style={{ position: 'absolute', left: 8, bottom: 8, background: 'rgba(0,0,0,0.55)', color: 'white', padding: '2px 6px', borderRadius: 4, fontSize: 12 }}>
+            {product.category}
+          </span>
+        </div>
         <div>
           <div style={{ fontSize: 20, fontWeight: 700 }}>{product.price.toLocaleString()} Saudi Riyal</div>
           <p style={{ marginTop: 12 }}>{product.description}</p>

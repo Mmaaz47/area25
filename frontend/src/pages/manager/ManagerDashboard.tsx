@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createOrUpdateProduct, deleteProductById, getAllProducts, seedIfEmpty, type Product } from '../../store/products'
+import { ImagesManager } from './components/ImagesManager'
 import { addCategory, getCategories, renameCategory, deleteCategory } from '../../store/categories'
 
 export function ManagerDashboard() {
@@ -36,7 +37,7 @@ export function ManagerDashboard() {
   }
 
   function startNew() {
-    setEditing({ id: crypto.randomUUID(), title: '', price: 0, description: '', category: 'Home Furniture' })
+    setEditing({ id: crypto.randomUUID(), title: '', price: 0, description: '', category: 'Home Furniture', images: [] })
   }
 
   const categories = useMemo(() => ['All', ...getCategories()], [products])
@@ -103,6 +104,7 @@ function Editor({ product, onCancel, onSave }: { product: Product, onCancel: () 
   const [price, setPrice] = useState(product.price)
   const [description, setDescription] = useState(product.description)
   const [category, setCategory] = useState(product.category)
+  const [images, setImages] = useState<string[]>(product.images ?? [])
   const [newCategory, setNewCategory] = useState('')
 
   return (
@@ -120,8 +122,11 @@ function Editor({ product, onCancel, onSave }: { product: Product, onCancel: () 
         <textarea placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} />
       </div>
       <div style={{ marginTop: 12 }}>
-        <button onClick={() => onSave({ id: product.id, title, price, description, category })}>Save</button>
+        <button onClick={() => onSave({ id: product.id, title, price, description, category, images })}>Save</button>
         <button onClick={onCancel} style={{ marginLeft: 8 }}>Cancel</button>
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <ImagesManager productId={product.id} images={images} onChange={setImages} />
       </div>
     </div>
   )

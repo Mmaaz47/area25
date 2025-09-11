@@ -4,6 +4,7 @@ export type Product = {
   price: number
   description: string
   category: 'Home Furniture' | 'Home Decor' | 'Lightings' | 'Rugs' | 'Office Furniture'
+  images?: string[]
 }
 
 const STORAGE_KEY = 'area25_products'

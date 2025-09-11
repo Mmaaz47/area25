@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom'
 import { getAllProducts, type Product } from '../../store/products'
 import { useMemo } from 'react'
+import { getCategories } from '../../store/categories'
 import { ProductCard } from '../../components/ProductCard'
 
 const validCategories = ['Home Furniture', 'Home Decor', 'Lightings', 'Rugs', 'Office Furniture'] as const
@@ -9,7 +10,8 @@ type Category = typeof validCategories[number]
 export function CategoryPage() {
   const { category } = useParams()
   const title = decodeURIComponent(category || '')
-  const isValid = (validCategories as readonly string[]).includes(title)
+  const categories = getCategories()
+  const isValid = categories.includes(title)
   const products = useMemo<Product[]>(() => getAllProducts().filter(p => p.category === title), [title])
 
   if (!isValid) {
@@ -24,6 +26,11 @@ export function CategoryPage() {
   return (
     <div style={{ padding: 16 }}>
       <h2>{title}</h2>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+        {categories.map(c => (
+          <Link key={c} to={`/category/${encodeURIComponent(c)}`} style={{ border: '1px solid #ddd', borderRadius: 999, padding: '6px 10px', textDecoration: 'none', background: c === title ? '#111' : '#fff', color: c === title ? '#fff' : '#111' }}>{c}</Link>
+        ))}
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
         {products.map(p => (
           <ProductCard key={p.id} product={p} />

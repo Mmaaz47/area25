@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export function ManagerLogin() {
@@ -19,7 +19,7 @@ export function ManagerLogin() {
   }
 
   // Show notice if redirected with loggedOut flag
-  React.useEffect(() => {
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('loggedOut')) {
       setNotice('Logged out')

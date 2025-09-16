@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom'
 import { getAllProducts, type Product } from '../../api/products'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getCategories } from '../../store/categories'
 import { ProductCard } from '../../components/ProductCard'
 

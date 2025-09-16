@@ -19,7 +19,7 @@ const CACHE_DURATION = 5000 // 5 seconds
 export async function getAllProducts(): Promise<Product[]> {
   // Return cached data if fresh
   if (productsCache && Date.now() - cacheTimestamp < CACHE_DURATION) {
-    return productsCache
+    return productsCache as Product[]
   }
 
   try {
@@ -27,7 +27,7 @@ export async function getAllProducts(): Promise<Product[]> {
     if (!response.ok) throw new Error('Failed to fetch products')
     const data = await response.json()
 
-    productsCache = data.map((p: any) => ({
+    const products: Product[] = (data as any[]).map((p: any) => ({
       ...p,
       price: typeof p.price === 'string' ? parseFloat(p.price) : p.price,
       category: p.category?.name || 'Uncategorized',
@@ -36,7 +36,8 @@ export async function getAllProducts(): Promise<Product[]> {
     }))
     cacheTimestamp = Date.now()
 
-    return productsCache
+    productsCache = products
+    return products
   } catch (error) {
     console.error('Error fetching products:', error)
     return []

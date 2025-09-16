@@ -1,5 +1,8 @@
-// Hardcoded backend URL for production
-const API_BASE = 'http://area25-simple.eba-b42mgv5j.eu-north-1.elasticbeanstalk.com/api'
+// Force production URL
+function getApiBase() {
+  return 'http://area25-simple.eba-b42mgv5j.eu-north-1.elasticbeanstalk.com/api'
+}
+const API_BASE = getApiBase()
 
 // API service for categories
 

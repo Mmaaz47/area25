@@ -10,7 +10,7 @@ frontend:
     build:
       commands:
         - echo "Building with production API URL..."
-        - echo "VITE_API_URL=https://area25-simple.eba-b42mgv5j.eu-north-1.elasticbeanstalk.com/api" > .env.production
+        - echo "VITE_API_URL=http://area25-simple.eba-b42mgv5j.eu-north-1.elasticbeanstalk.com/api" > .env.production
         - npm run build
   artifacts:
     baseDirectory: dist

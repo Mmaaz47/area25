@@ -1,4 +1,5 @@
-import { API_BASE } from '../config/api'
+// Hardcoded backend URL for production
+const API_BASE = 'http://area25-simple.eba-b42mgv5j.eu-north-1.elasticbeanstalk.com/api'
 
 // API service for products
 export type Product = {

@@ -1,5 +1,5 @@
-// PRODUCTION API URL - DO NOT USE RELATIVE PATHS
-const BACKEND_URL = 'http://area25-simple.eba-b42mgv5j.eu-north-1.elasticbeanstalk.com'
+// PRODUCTION API URL - Using HTTPS backend
+const BACKEND_URL = 'https://area25-simple.eba-b42mgv5j.eu-north-1.elasticbeanstalk.com'
 const API_BASE = `${BACKEND_URL}/api`
 console.log('Categories API URL:', API_BASE) // Debug log
 

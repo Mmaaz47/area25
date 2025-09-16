@@ -1,12 +1,21 @@
 import { useParams, Link } from 'react-router-dom'
-import { getProductById } from '../../api/products'
+import { getProductById, type Product } from '../../api/products'
 import { addToCart } from '../../store/cart'
 import { toggleBookmark, isBookmarked } from '../../store/bookmarks'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export function ProductDetails() {
   const { id } = useParams()
-  const product = id ? getProductById(id) : undefined
+  const [product, setProduct] = useState<Product | undefined>(undefined)
+  useEffect(() => {
+    let mounted = true
+    if (id) {
+      getProductById(id).then(p => { if (mounted) setProduct(p) })
+    } else {
+      setProduct(undefined)
+    }
+    return () => { mounted = false }
+  }, [id])
   const bookmarked = useMemo(() => product ? isBookmarked(product.id) : false, [product])
 
   if (!product) {

@@ -20,9 +20,9 @@ export async function getCategoriesWithDetails(): Promise<Category[]> {
   try {
     const response = await fetch(`${API_BASE}/categories`)
     if (!response.ok) throw new Error('Failed to fetch categories')
-    const data = await response.json()
+    const data = (await response.json()) as Category[]
     categoriesCache = data
-    return categoriesCache
+    return data
   } catch (error) {
     console.error('Error fetching categories:', error)
     return []

@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom'
 import { getAllProducts, type Product } from '../../api/products'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getCategories } from '../../store/categories'
 import { ProductCard } from '../../components/ProductCard'
 
@@ -11,7 +11,14 @@ export function CategoryPage() {
   const title = decodeURIComponent(category || '')
   const categories = getCategories()
   const isValid = categories.includes(title)
-  const products = useMemo<Product[]>(() => getAllProducts().filter(p => p.category === title), [title])
+  const [products, setProducts] = useState<Product[]>([])
+  useEffect(() => {
+    let mounted = true
+    getAllProducts().then(list => {
+      if (mounted) setProducts(list.filter(p => p.category === title))
+    })
+    return () => { mounted = false }
+  }, [title])
 
   if (!isValid) {
     return (

@@ -29,3 +29,5 @@ dist-ssr
 # Common frontend ignores
 node_modules/
 dist/
+
+# Keep this comment to ensure at least one tracked change when needed

@@ -1,8 +1,7 @@
-// Force production URL
-function getApiBase() {
-  return 'http://area25-simple.eba-b42mgv5j.eu-north-1.elasticbeanstalk.com/api'
-}
-const API_BASE = getApiBase()
+// PRODUCTION API URL - DO NOT USE RELATIVE PATHS
+const BACKEND_URL = 'http://area25-simple.eba-b42mgv5j.eu-north-1.elasticbeanstalk.com'
+const API_BASE = `${BACKEND_URL}/api`
+console.log('Using API URL:', API_BASE) // Debug log
 
 // API service for products
 export type Product = {
@@ -29,7 +28,9 @@ export async function getAllProducts(): Promise<Product[]> {
   }
 
   try {
-    const response = await fetch(`${API_BASE}/products`)
+    const url = `${API_BASE}/products`
+    console.log('Fetching products from:', url) // Debug log
+    const response = await fetch(url)
     if (!response.ok) throw new Error('Failed to fetch products')
     const data = await response.json()
 

@@ -1,8 +1,7 @@
-// Force production URL
-function getApiBase() {
-  return 'http://area25-simple.eba-b42mgv5j.eu-north-1.elasticbeanstalk.com/api'
-}
-const API_BASE = getApiBase()
+// PRODUCTION API URL - DO NOT USE RELATIVE PATHS
+const BACKEND_URL = 'http://area25-simple.eba-b42mgv5j.eu-north-1.elasticbeanstalk.com'
+const API_BASE = `${BACKEND_URL}/api`
+console.log('Categories API URL:', API_BASE) // Debug log
 
 // API service for categories
 

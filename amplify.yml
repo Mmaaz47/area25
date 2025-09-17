@@ -1,0 +1,20 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - cd area25-main/area25-main/frontend
+        - echo "Installing dependencies..."
+        - npm install
+    build:
+      commands:
+        - echo "Building with production API URL..."
+        - echo "VITE_API_URL=https://api.6th-space.com/api" > .env.production
+        - npm run build
+  artifacts:
+    baseDirectory: area25-main/area25-main/frontend/dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - area25-main/area25-main/frontend/node_modules/**/*

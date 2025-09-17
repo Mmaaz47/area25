@@ -231,7 +231,7 @@ app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
 
   // Simple auth check - you should implement proper auth
-  if (username === 'admin' && password === process.env.ADMIN_PASSWORD || 'admin123') {
+  if (username === 'admin' && password === (process.env.ADMIN_PASSWORD || 'admin123')) {
     res.json({
       success: true,
       token: 'dummy-token-' + Date.now(),

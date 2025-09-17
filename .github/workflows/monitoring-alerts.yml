@@ -1,0 +1,342 @@
+name: Monitoring & Alerts
+
+on:
+  workflow_run:
+    workflows: ["Backend CI/CD Pipeline", "Frontend CI/CD Pipeline"]
+    types:
+      - completed
+  schedule:
+    # Health checks every 15 minutes during business hours (UTC)
+    - cron: '*/15 8-20 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      check_type:
+        description: 'Type of health check to run'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - 'full'
+          - 'api-only'
+          - 'frontend-only'
+
+env:
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+jobs:
+  deployment-status:
+    name: Check Deployment Status
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'skipped'
+
+    steps:
+      - name: Check deployment result
+        run: |
+          if [[ "${{ github.event.workflow_run.conclusion }}" == "success" ]]; then
+            echo "✅ Deployment completed successfully"
+            echo "DEPLOYMENT_STATUS=success" >> $GITHUB_ENV
+            echo "DEPLOYMENT_MESSAGE=Deployment completed successfully for ${{ github.event.workflow_run.name }}" >> $GITHUB_ENV
+          else
+            echo "❌ Deployment failed"
+            echo "DEPLOYMENT_STATUS=failure" >> $GITHUB_ENV
+            echo "DEPLOYMENT_MESSAGE=Deployment failed for ${{ github.event.workflow_run.name }}" >> $GITHUB_ENV
+          fi
+
+      - name: Notify Slack on deployment
+        if: env.SLACK_WEBHOOK_URL != ''
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ env.DEPLOYMENT_STATUS }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          text: ${{ env.DEPLOYMENT_MESSAGE }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }}
+
+  health-check:
+    name: Application Health Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Check backend health
+        if: inputs.check_type == 'full' || inputs.check_type == 'api-only' || github.event_name == 'schedule'
+        id: backend-health
+        run: |
+          if [ -n "${{ secrets.EB_ENVIRONMENT_URL }}" ]; then
+            echo "Checking backend health at: ${{ secrets.EB_ENVIRONMENT_URL }}"
+
+            # Health check with timeout
+            if curl -f -m 30 "${{ secrets.EB_ENVIRONMENT_URL }}/health" > /dev/null 2>&1; then
+              echo "✅ Backend is healthy"
+              echo "backend_status=healthy" >> $GITHUB_OUTPUT
+            else
+              echo "❌ Backend health check failed"
+              echo "backend_status=unhealthy" >> $GITHUB_OUTPUT
+
+              # Try to get more details
+              curl -I "${{ secrets.EB_ENVIRONMENT_URL }}/health" || echo "Backend appears to be down"
+            fi
+          else
+            echo "Backend URL not configured, skipping health check"
+            echo "backend_status=not_configured" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check frontend health
+        if: inputs.check_type == 'full' || inputs.check_type == 'frontend-only' || github.event_name == 'schedule'
+        id: frontend-health
+        run: |
+          # Get Amplify app URL
+          if [ -n "${{ secrets.AMPLIFY_APP_ID }}" ]; then
+            APP_URL=$(aws amplify get-app --app-id ${{ secrets.AMPLIFY_APP_ID }} --query 'app.defaultDomain' --output text 2>/dev/null || echo "")
+
+            if [ -n "$APP_URL" ]; then
+              echo "Checking frontend health at: https://$APP_URL"
+
+              # Health check with timeout
+              if curl -f -m 30 "https://$APP_URL" > /dev/null 2>&1; then
+                echo "✅ Frontend is healthy"
+                echo "frontend_status=healthy" >> $GITHUB_OUTPUT
+              else
+                echo "❌ Frontend health check failed"
+                echo "frontend_status=unhealthy" >> $GITHUB_OUTPUT
+
+                # Try to get more details
+                curl -I "https://$APP_URL" || echo "Frontend appears to be down"
+              fi
+            else
+              echo "Could not determine Amplify app URL"
+              echo "frontend_status=url_unknown" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "Amplify app ID not configured, skipping health check"
+            echo "frontend_status=not_configured" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check database connectivity
+        if: inputs.check_type == 'full' || inputs.check_type == 'api-only' || github.event_name == 'schedule'
+        id: database-health
+        run: |
+          if [ -n "${{ secrets.DATABASE_URL }}" ]; then
+            echo "Checking database connectivity..."
+
+            # Install PostgreSQL client
+            sudo apt-get update && sudo apt-get install -y postgresql-client
+
+            # Test database connection with timeout
+            if timeout 30 psql "${{ secrets.DATABASE_URL }}" -c "SELECT 1;" > /dev/null 2>&1; then
+              echo "✅ Database is healthy"
+              echo "database_status=healthy" >> $GITHUB_OUTPUT
+            else
+              echo "❌ Database connection failed"
+              echo "database_status=unhealthy" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "Database URL not configured, skipping health check"
+            echo "database_status=not_configured" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check S3 bucket access
+        if: inputs.check_type == 'full' || github.event_name == 'schedule'
+        id: s3-health
+        run: |
+          if [ -n "${{ secrets.S3_BUCKET_NAME }}" ]; then
+            echo "Checking S3 bucket access for: ${{ secrets.S3_BUCKET_NAME }}"
+
+            # Test S3 bucket access
+            if aws s3 ls s3://${{ secrets.S3_BUCKET_NAME }}/ > /dev/null 2>&1; then
+              echo "✅ S3 bucket is accessible"
+              echo "s3_status=healthy" >> $GITHUB_OUTPUT
+
+              # Check bucket size and object count
+              OBJECT_COUNT=$(aws s3 ls s3://${{ secrets.S3_BUCKET_NAME }}/ --recursive | wc -l)
+              echo "S3 bucket contains $OBJECT_COUNT objects"
+            else
+              echo "❌ S3 bucket access failed"
+              echo "s3_status=unhealthy" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "S3 bucket not configured, skipping health check"
+            echo "s3_status=not_configured" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate health report
+        run: |
+          echo "# Health Check Report" > health-report.md
+          echo "Generated: $(date)" >> health-report.md
+          echo "" >> health-report.md
+
+          echo "## Service Status" >> health-report.md
+          echo "- Backend: ${{ steps.backend-health.outputs.backend_status }}" >> health-report.md
+          echo "- Frontend: ${{ steps.frontend-health.outputs.frontend_status }}" >> health-report.md
+          echo "- Database: ${{ steps.database-health.outputs.database_status }}" >> health-report.md
+          echo "- S3 Storage: ${{ steps.s3-health.outputs.s3_status }}" >> health-report.md
+
+          # Determine overall health
+          if [[ "${{ steps.backend-health.outputs.backend_status }}" == "healthy" &&
+                "${{ steps.frontend-health.outputs.frontend_status }}" == "healthy" &&
+                "${{ steps.database-health.outputs.database_status }}" == "healthy" ]]; then
+            echo "OVERALL_STATUS=healthy" >> $GITHUB_ENV
+            echo "ALERT_COLOR=good" >> $GITHUB_ENV
+          else
+            echo "OVERALL_STATUS=degraded" >> $GITHUB_ENV
+            echo "ALERT_COLOR=warning" >> $GITHUB_ENV
+
+            # Check if any critical services are down
+            if [[ "${{ steps.backend-health.outputs.backend_status }}" == "unhealthy" ||
+                  "${{ steps.database-health.outputs.database_status }}" == "unhealthy" ]]; then
+              echo "OVERALL_STATUS=critical" >> $GITHUB_ENV
+              echo "ALERT_COLOR=danger" >> $GITHUB_ENV
+            fi
+          fi
+
+      - name: Upload health report
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-report-${{ github.run_number }}
+          path: health-report.md
+          retention-days: 7
+
+      - name: Notify on health issues
+        if: env.OVERALL_STATUS != 'healthy' && env.SLACK_WEBHOOK_URL != ''
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "text": "🚨 Area25 Application Health Alert",
+              "attachments": [
+                {
+                  "color": "${{ env.ALERT_COLOR }}",
+                  "fields": [
+                    {
+                      "title": "Overall Status",
+                      "value": "${{ env.OVERALL_STATUS }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Backend",
+                      "value": "${{ steps.backend-health.outputs.backend_status }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Frontend",
+                      "value": "${{ steps.frontend-health.outputs.frontend_status }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Database",
+                      "value": "${{ steps.database-health.outputs.database_status }}",
+                      "short": true
+                    }
+                  ],
+                  "footer": "Area25 Monitoring",
+                  "ts": ${{ github.event.repository.updated_at }}
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }}
+
+  performance-check:
+    name: Performance Monitoring
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.check_type == 'full')
+
+    steps:
+      - name: Install tools
+        run: |
+          # Install curl and performance testing tools
+          sudo apt-get update
+          sudo apt-get install -y curl jq
+
+      - name: Backend performance test
+        if: secrets.EB_ENVIRONMENT_URL != ''
+        run: |
+          echo "Testing backend performance..."
+
+          # Test API response time
+          RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' "${{ secrets.EB_ENVIRONMENT_URL }}/health")
+          echo "Backend response time: ${RESPONSE_TIME}s"
+
+          # Set alert threshold (2 seconds)
+          if (( $(echo "$RESPONSE_TIME > 2.0" | bc -l) )); then
+            echo "⚠️  Backend response time is slow: ${RESPONSE_TIME}s"
+            echo "BACKEND_SLOW=true" >> $GITHUB_ENV
+          else
+            echo "✅ Backend response time is good: ${RESPONSE_TIME}s"
+            echo "BACKEND_SLOW=false" >> $GITHUB_ENV
+          fi
+
+          echo "BACKEND_RESPONSE_TIME=$RESPONSE_TIME" >> $GITHUB_ENV
+
+      - name: Frontend performance test
+        run: |
+          # Install lighthouse
+          npm install -g lighthouse
+
+          # Get Amplify URL
+          if [ -n "${{ secrets.AMPLIFY_APP_ID }}" ]; then
+            aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws configure set region ${{ secrets.AWS_REGION }}
+
+            APP_URL=$(aws amplify get-app --app-id ${{ secrets.AMPLIFY_APP_ID }} --query 'app.defaultDomain' --output text 2>/dev/null || echo "")
+
+            if [ -n "$APP_URL" ]; then
+              echo "Testing frontend performance for: https://$APP_URL"
+
+              # Run Lighthouse audit
+              lighthouse "https://$APP_URL" --only-categories=performance --output=json --output-path=./lighthouse-report.json --chrome-flags="--headless" || echo "Lighthouse audit failed"
+
+              if [ -f lighthouse-report.json ]; then
+                PERFORMANCE_SCORE=$(cat lighthouse-report.json | jq -r '.categories.performance.score * 100')
+                echo "Frontend performance score: $PERFORMANCE_SCORE"
+                echo "FRONTEND_PERFORMANCE_SCORE=$PERFORMANCE_SCORE" >> $GITHUB_ENV
+
+                if (( $(echo "$PERFORMANCE_SCORE < 70" | bc -l) )); then
+                  echo "⚠️  Frontend performance score is low: $PERFORMANCE_SCORE"
+                  echo "FRONTEND_SLOW=true" >> $GITHUB_ENV
+                else
+                  echo "✅ Frontend performance score is good: $PERFORMANCE_SCORE"
+                  echo "FRONTEND_SLOW=false" >> $GITHUB_ENV
+                fi
+              fi
+            fi
+          fi
+
+      - name: Alert on performance issues
+        if: (env.BACKEND_SLOW == 'true' || env.FRONTEND_SLOW == 'true') && env.SLACK_WEBHOOK_URL != ''
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "text": "⚡ Area25 Performance Alert",
+              "attachments": [
+                {
+                  "color": "warning",
+                  "fields": [
+                    {
+                      "title": "Backend Response Time",
+                      "value": "${{ env.BACKEND_RESPONSE_TIME }}s",
+                      "short": true
+                    },
+                    {
+                      "title": "Frontend Performance Score",
+                      "value": "${{ env.FRONTEND_PERFORMANCE_SCORE }}",
+                      "short": true
+                    }
+                  ],
+                  "footer": "Area25 Performance Monitoring"
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ env.SLACK_WEBHOOK_URL }}

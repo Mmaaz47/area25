@@ -1,0 +1,10 @@
+{
+  "name": "area25-minimal",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node simple-index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

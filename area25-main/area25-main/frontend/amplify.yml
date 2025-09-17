@@ -1,0 +1,20 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - echo "Removing Windows-specific dependency..."
+        - npm uninstall @rollup/rollup-win32-x64-msvc
+        - echo "Installing dependencies..."
+        - npm install
+    build:
+      commands:
+        - echo "Building with production API URL..."
+        - echo "VITE_API_URL=https://api.6th-space.com/api" > .env.production
+        - npm run build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'
+  cache:
+    paths: []

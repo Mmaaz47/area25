@@ -1,0 +1,9 @@
+@"
+node_modules/
+dist/
+.env
+"@ | Out-File -Encoding UTF8 .gitignore
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

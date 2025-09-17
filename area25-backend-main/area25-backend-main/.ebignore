@@ -1,0 +1,54 @@
+# Files and directories to exclude from Elastic Beanstalk deployment
+
+# Development files
+.env
+.env.local
+.env.development
+*.log
+logs/
+
+# Development dependencies - will be installed on server
+node_modules/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Testing
+coverage/
+.nyc_output/
+.jest/
+
+# Build artifacts that should be rebuilt on deployment
+dist/
+build/
+
+# Development scripts and documentation (keep DEPLOYMENT.md)
+*.md
+!DEPLOYMENT.md
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Temporary files
+tmp/
+temp/
+.tmp/

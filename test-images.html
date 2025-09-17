@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test S3 Images</title>
+</head>
+<body>
+    <h1>Testing S3 Image Display</h1>
+    <div id="products"></div>
+
+    <script>
+        // Test fetching from backend
+        fetch('http://localhost:4000/api/products')
+            .then(res => res.json())
+            .then(data => {
+                console.log('Raw backend data:', data);
+
+                const container = document.getElementById('products');
+
+                data.forEach(product => {
+                    const div = document.createElement('div');
+                    div.style.border = '1px solid #ccc';
+                    div.style.margin = '10px';
+                    div.style.padding = '10px';
+
+                    div.innerHTML = `
+                        <h3>${product.title}</h3>
+                        <p>Category: ${product.category.name}</p>
+                        <p>Images: ${product.images.length}</p>
+                    `;
+
+                    if (product.images && product.images.length > 0) {
+                        product.images.forEach(img => {
+                            const imgEl = document.createElement('img');
+                            imgEl.src = img.url;
+                            imgEl.style.width = '200px';
+                            imgEl.style.height = '200px';
+                            imgEl.style.objectFit = 'cover';
+                            imgEl.style.margin = '5px';
+                            imgEl.onerror = () => {
+                                console.error('Failed to load image:', img.url);
+                                imgEl.alt = 'Failed to load';
+                            };
+                            imgEl.onload = () => {
+                                console.log('Successfully loaded:', img.url);
+                            };
+                            div.appendChild(imgEl);
+                        });
+                    } else {
+                        div.innerHTML += '<p>No images</p>';
+                    }
+
+                    container.appendChild(div);
+                });
+
+                // Also test the frontend API transformation
+                fetch('http://localhost:5173/api/products')
+                    .then(res => res.json())
+                    .then(frontendData => {
+                        console.log('Frontend transformed data:', frontendData);
+                    })
+                    .catch(err => console.error('Frontend API error:', err));
+            })
+            .catch(err => console.error('Backend API error:', err));
+    </script>
+</body>
+</html>

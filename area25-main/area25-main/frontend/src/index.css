@@ -104,3 +104,4 @@ input:focus, textarea:focus, select:focus {
 }
 
 @media (prefers-color-scheme: light) { }
+/* Frontend v0.0.5 - Fixed toLocaleString errors */

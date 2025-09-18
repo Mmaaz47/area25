@@ -3,6 +3,7 @@ name: Deploy Backend to Elastic Beanstalk
 on:
   push:
     branches:
+      - main
       - master
     paths:
       - 'area25-backend-main/**'
@@ -13,38 +14,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+    - name: Generate deployment package
+      run: |
+        cd area25-backend-main/area25-backend-main
+        zip -r ../../deploy.zip . -x "node_modules/*" ".git/*" "*.log" ".env" "*.zip"
 
-      - name: Install dependencies
-        working-directory: ./area25-backend-main/area25-backend-main
-        run: npm ci
-
-      - name: Create deployment package
-        working-directory: ./area25-backend-main/area25-backend-main
-        run: |
-          zip -r deploy.zip . \
-            -x "*.git*" \
-            -x "node_modules/*" \
-            -x "*.log" \
-            -x ".env" \
-            -x "*.md" \
-            -x "test*" \
-            -x "*.test.*"
-
-      - name: Deploy to Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v22
-        with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: area25-simple
-          environment_name: area25-simple
-          version_label: ${{ github.sha }}
-          region: eu-north-1
-          deployment_package: ./area25-backend-main/area25-backend-main/deploy.zip
-          wait_for_environment_recovery: 120
+    - name: Deploy to Elastic Beanstalk
+      uses: einaregilsson/beanstalk-deploy@v21
+      with:
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        application_name: area25-furniture-backend
+        environment_name: area25-simple
+        version_label: ${{ github.sha }}
+        region: eu-north-1
+        deployment_package: deploy.zip
+        wait_for_environment_recovery: 300

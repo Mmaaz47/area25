@@ -23,7 +23,12 @@ const s3Client = new S3Client({
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -62,9 +67,13 @@ app.get('/api/products', async (req, res) => {
 
 app.get('/api/products/:id', async (req, res) => {
   try {
+    const { id } = req.params;
     const product = await prisma.product.findUnique({
-      where: { id: parseInt(req.params.id) },
-      include: { category: true }
+      where: { id: id }, // Use string ID directly
+      include: {
+        category: true,
+        images: true
+      }
     });
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
@@ -90,26 +99,55 @@ app.post('/api/products', async (req, res) => {
 
 app.put('/api/products/:id', async (req, res) => {
   try {
+    const { id } = req.params;
+    const { title, price, description, category, categoryId, images } = req.body;
+
+    const updateData = {
+      title,
+      price: price ? parseFloat(price) : undefined,
+      description,
+      categoryId: categoryId || undefined
+    };
+
+    // Remove undefined values
+    Object.keys(updateData).forEach(key =>
+      updateData[key] === undefined && delete updateData[key]
+    );
+
     const product = await prisma.product.update({
-      where: { id: parseInt(req.params.id) },
-      data: req.body
+      where: { id: id }, // Use string ID directly
+      data: updateData,
+      include: {
+        category: true,
+        images: true
+      }
     });
+
     res.json(product);
   } catch (error) {
     console.error('Error updating product:', error);
-    res.status(500).json({ error: 'Failed to update product' });
+    res.status(500).json({ error: 'Failed to update product', details: error.message });
   }
 });
 
 app.delete('/api/products/:id', async (req, res) => {
   try {
-    await prisma.product.delete({
-      where: { id: parseInt(req.params.id) }
+    const { id } = req.params;
+
+    // First delete related images
+    await prisma.image.deleteMany({
+      where: { productId: id }
     });
+
+    // Then delete the product
+    await prisma.product.delete({
+      where: { id: id } // Use string ID directly
+    });
+
     res.status(204).send();
   } catch (error) {
     console.error('Error deleting product:', error);
-    res.status(500).json({ error: 'Failed to delete product' });
+    res.status(500).json({ error: 'Failed to delete product', details: error.message });
   }
 });
 
@@ -239,6 +277,40 @@ app.post('/api/auth/login', async (req, res) => {
     });
   } else {
     res.status(401).json({ error: 'Invalid credentials' });
+  }
+});
+
+// === S3 IMAGE ROUTES ===
+app.get('/api/images-s3/status', (req, res) => {
+  res.json({
+    s3Enabled: !!process.env.AWS_ACCESS_KEY_ID && !!process.env.S3_BUCKET_NAME,
+    bucket: process.env.S3_BUCKET_NAME,
+    region: process.env.AWS_REGION
+  });
+});
+
+app.post('/api/images-s3/upload', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const key = `products/${Date.now()}-${req.file.originalname}`;
+    const uploadParams = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: key,
+      Body: req.file.buffer,
+      ContentType: req.file.mimetype,
+    };
+
+    const command = new PutObjectCommand(uploadParams);
+    await s3Client.send(command);
+
+    const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    res.json({ url });
+  } catch (error) {
+    console.error('S3 upload error:', error);
+    res.status(500).json({ error: 'Failed to upload image' });
   }
 });
 

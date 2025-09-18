@@ -87,8 +87,23 @@ app.get('/api/products/:id', async (req, res) => {
 
 app.post('/api/products', async (req, res) => {
   try {
+    const { title, price, description, categoryId, images } = req.body;
+
     const product = await prisma.product.create({
-      data: req.body
+      data: {
+        id: req.body.id || undefined, // Use provided ID or let Prisma generate
+        title,
+        price: price ? parseFloat(price) : 0,
+        description,
+        categoryId,
+        images: images && images.length > 0 ? {
+          create: images.map(url => ({ url }))
+        } : undefined
+      },
+      include: {
+        category: true,
+        images: true
+      }
     });
     res.status(201).json(product);
   } catch (error) {
@@ -102,31 +117,71 @@ app.put('/api/products/:id', async (req, res) => {
     const { id } = req.params;
     const { title, price, description, category, categoryId, images } = req.body;
 
-    const updateData = {
-      title,
-      price: price ? parseFloat(price) : undefined,
-      description,
-      categoryId: categoryId || undefined
-    };
-
-    // Remove undefined values
-    Object.keys(updateData).forEach(key =>
-      updateData[key] === undefined && delete updateData[key]
-    );
-
-    const product = await prisma.product.update({
-      where: { id: id }, // Use string ID directly
-      data: updateData,
-      include: {
-        category: true,
-        images: true
-      }
+    // Check if product exists
+    const existingProduct = await prisma.product.findUnique({
+      where: { id: id }
     });
 
-    res.json(product);
+    if (existingProduct) {
+      // Product exists - update it
+      // If images are provided, delete old ones and create new ones
+      if (images !== undefined) {
+        await prisma.image.deleteMany({
+          where: { productId: id }
+        });
+      }
+
+      const updateData = {
+        title,
+        price: price ? parseFloat(price) : undefined,
+        description,
+        categoryId: categoryId || undefined,
+        images: images && images.length > 0 ? {
+          create: images.map(url => ({ url }))
+        } : undefined
+      };
+
+      // Remove undefined values except for images
+      Object.keys(updateData).forEach(key => {
+        if (key !== 'images' && updateData[key] === undefined) {
+          delete updateData[key];
+        }
+      });
+
+      const product = await prisma.product.update({
+        where: { id: id },
+        data: updateData,
+        include: {
+          category: true,
+          images: true
+        }
+      });
+
+      res.json(product);
+    } else {
+      // Product doesn't exist - create it with the provided ID
+      const product = await prisma.product.create({
+        data: {
+          id: id,
+          title: title || 'New Product',
+          price: price ? parseFloat(price) : 0,
+          description: description || '',
+          categoryId: categoryId || undefined,
+          images: images && images.length > 0 ? {
+            create: images.map(url => ({ url }))
+          } : undefined
+        },
+        include: {
+          category: true,
+          images: true
+        }
+      });
+
+      res.json(product);
+    }
   } catch (error) {
-    console.error('Error updating product:', error);
-    res.status(500).json({ error: 'Failed to update product', details: error.message });
+    console.error('Error updating/creating product:', error);
+    res.status(500).json({ error: 'Failed to update/create product', details: error.message });
   }
 });
 
@@ -166,8 +221,9 @@ app.get('/api/categories', async (req, res) => {
 
 app.get('/api/categories/:id', async (req, res) => {
   try {
+    const { id } = req.params;
     const category = await prisma.category.findUnique({
-      where: { id: parseInt(req.params.id) },
+      where: { id: id }, // Use string ID directly
       include: { products: true }
     });
     if (!category) {
@@ -194,8 +250,9 @@ app.post('/api/categories', async (req, res) => {
 
 app.put('/api/categories/:id', async (req, res) => {
   try {
+    const { id } = req.params;
     const category = await prisma.category.update({
-      where: { id: parseInt(req.params.id) },
+      where: { id: id }, // Use string ID directly
       data: req.body
     });
     res.json(category);
@@ -207,8 +264,9 @@ app.put('/api/categories/:id', async (req, res) => {
 
 app.delete('/api/categories/:id', async (req, res) => {
   try {
+    const { id } = req.params;
     await prisma.category.delete({
-      where: { id: parseInt(req.params.id) }
+      where: { id: id } // Use string ID directly
     });
     res.status(204).send();
   } catch (error) {

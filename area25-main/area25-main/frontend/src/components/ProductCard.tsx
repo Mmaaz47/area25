@@ -107,7 +107,7 @@ export function ProductCard({ product }: { product: Product }) {
             color: 'var(--accent)',
             marginBottom: 12
           }}>
-            {product.price.toLocaleString()} SAR
+            {(product.price || 0).toLocaleString()} SAR
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button

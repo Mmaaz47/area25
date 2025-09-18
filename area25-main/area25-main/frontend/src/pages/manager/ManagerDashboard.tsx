@@ -107,7 +107,7 @@ export function ManagerDashboard() {
           const token = sessionStorage.getItem('manager_token')
           if (token) {
             try {
-              await fetch('/api/auth/logout', {
+              await fetch('https://api.6th-space.com/api/auth/logout', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
               })
@@ -173,7 +173,7 @@ function Editor({ product, onCancel, onSave }: { product: Product, onCancel: () 
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const response = await fetch('/api/categories')
+        const response = await fetch('https://api.6th-space.com/api/categories')
         const data = await response.json()
         setCategories(data)
         // Set categoryId if not set
@@ -213,7 +213,7 @@ function Editor({ product, onCancel, onSave }: { product: Product, onCancel: () 
             if (newCategory.trim()) {
               try {
                 await addCategory(newCategory.trim())
-                const response = await fetch('/api/categories')
+                const response = await fetch('https://api.6th-space.com/api/categories')
                 const data = await response.json()
                 setCategories(data)
                 const newCat = data.find((c: any) => c.name === newCategory.trim())
@@ -249,7 +249,7 @@ function CategoryManager() {
 
   useEffect(() => {
     const loadCategories = async () => {
-      const response = await fetch('/api/categories')
+      const response = await fetch('https://api.6th-space.com/api/categories')
       const data = await response.json()
       setCategories(data)
     }
@@ -258,7 +258,7 @@ function CategoryManager() {
 
   async function refresh() {
     setListVersion(v => v + 1)
-    const response = await fetch('/api/categories')
+    const response = await fetch('https://api.6th-space.com/api/categories')
     const data = await response.json()
     setCategories(data)
   }

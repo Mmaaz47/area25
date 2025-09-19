@@ -1,7 +1,7 @@
-// PRODUCTION API URL - Using HTTP (HTTPS cert validation failed for EB domain)
-const BACKEND_URL = 'http://area25-simple.eba-b42mgv5j.eu-north-1.elasticbeanstalk.com'
-const API_BASE = `${BACKEND_URL}/api`
-console.log('Using API URL:', API_BASE) // Debug log
+// Use environment variable for API URL
+const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+const BACKEND_URL = import.meta.env.VITE_API_URL || (isDevelopment ? 'http://localhost:4000/api' : 'https://api.6th-space.com/api')
+const API_BASE = BACKEND_URL.endsWith('/api') ? BACKEND_URL : `${BACKEND_URL}/api`
 
 // API service for products
 export type Product = {
@@ -56,8 +56,9 @@ export async function getProductById(id: string): Promise<Product | undefined> {
 }
 
 export async function createOrUpdateProduct(product: Product): Promise<Product> {
-  // Always use PUT with the ID - backend will create if doesn't exist
-  const url = `${API_BASE}/products/${product.id}`
+  // Check if it's a new product - check if ID exists in current products
+  const existingProducts = await getAllProducts()
+  const isNewProduct = !product.id || !existingProducts.find(p => p.id === product.id)
 
   const body = {
     title: product.title,
@@ -78,11 +79,22 @@ export async function createOrUpdateProduct(product: Product): Promise<Product> 
 
   console.log('Sending to backend:', body)
 
-  const response = await fetch(url, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  })
+  let response;
+  if (isNewProduct) {
+    // Create new product
+    response = await fetch(`${API_BASE}/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+  } else {
+    // Update existing product
+    response = await fetch(`${API_BASE}/products/${product.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+  }
 
   if (!response.ok) throw new Error('Failed to save product')
 
@@ -177,3 +189,4 @@ export async function seedIfEmpty(): Promise<void> {
     console.error('Error seeding database:', error)
   }
 }// Force rebuild Wed Sep 17 00:26:33 PKT 2025
+// Trigger Amplify rebuild Thu Sep 18 10:47:26 PKT 2025

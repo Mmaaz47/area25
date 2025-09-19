@@ -1,7 +1,7 @@
-// PRODUCTION API URL - Using HTTP (HTTPS cert validation failed for EB domain)
-const BACKEND_URL = 'http://area25-simple.eba-b42mgv5j.eu-north-1.elasticbeanstalk.com'
-const API_BASE = `${BACKEND_URL}/api`
-console.log('Categories API URL:', API_BASE) // Debug log
+// Use environment variable for API URL
+const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+const BACKEND_URL = import.meta.env.VITE_API_URL || (isDevelopment ? 'http://localhost:4000/api' : 'https://api.6th-space.com/api')
+const API_BASE = BACKEND_URL.endsWith('/api') ? BACKEND_URL : `${BACKEND_URL}/api`
 
 // API service for categories
 

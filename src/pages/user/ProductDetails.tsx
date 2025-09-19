@@ -32,7 +32,7 @@ export function ProductDetails() {
           </span>
         </div>
         <div>
-          <div style={{ fontSize: 20, fontWeight: 700 }}>{product.price.toLocaleString()} Saudi Riyal</div>
+          <div style={{ fontSize: 20, fontWeight: 700 }}>{(product.price || 0).toLocaleString()} Saudi Riyal</div>
           <p style={{ marginTop: 12 }}>{product.description}</p>
           <div style={{ marginTop: 8, opacity: 0.8 }}>Category: {product.category}</div>
           <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>

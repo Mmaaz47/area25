@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+const API_URL = isDevelopment ? 'http://localhost:4000/api' : 'https://api.6th-space.com/api'
+
 export function ManagerLogin() {
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
@@ -15,7 +18,7 @@ export function ManagerLogin() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
@@ -26,7 +29,9 @@ export function ManagerLogin() {
       if (response.ok && data.success) {
         // Store token in sessionStorage (more secure than localStorage)
         sessionStorage.setItem('manager_token', data.token)
-        sessionStorage.setItem('manager_token_expires', data.expiresAt)
+        // Set expiry to 24 hours from now if not provided by backend
+        const expiresAt = data.expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        sessionStorage.setItem('manager_token_expires', expiresAt)
         navigate('/manager')
       } else {
         setError(data.error || 'Invalid credentials')

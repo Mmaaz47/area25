@@ -81,19 +81,25 @@ export function ImagesManager({ productId, images, onChange }: Props) {
   }
 
   async function handleRemove(url: string) {
-    let removedViaApi = false
-    if (!useLocalFallback && s3Configured && !url.startsWith('data:')) {
+    console.log('Removing image:', url)
+    console.log('Current images before removal:', images)
+
+    // Try to delete from S3 if it's an S3 URL
+    if (!url.startsWith('data:')) {
       try {
         const ok = await deleteImageFromS3(productId, url)
-        removedViaApi = ok
-      } catch {
-        removedViaApi = false
+        if (!ok) {
+          console.warn('Failed to delete from S3, removing from UI anyway')
+        }
+      } catch (error) {
+        console.error('Error deleting from S3:', error)
       }
     }
-    // Always remove locally if using fallback, if URL is a data URL, or if API removal failed
-    if (useLocalFallback || url.startsWith('data:') || !removedViaApi) {
-      onChange(images.filter(u => u !== url))
-    }
+
+    // Always remove from the UI
+    const newImages = images.filter(u => u !== url)
+    console.log('New images after removal:', newImages)
+    onChange(newImages)
   }
 
   return (

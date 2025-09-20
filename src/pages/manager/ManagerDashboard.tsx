@@ -169,7 +169,11 @@ function Editor({ product, onCancel, onSave }: { product: Product, onCancel: () 
   const [description, setDescription] = useState(product.description)
   const [category, setCategory] = useState(product.category)
   const [categoryId, setCategoryId] = useState(product.categoryId || '')
-  const [images, setImages] = useState<string[]>(product.images ?? [])
+  const [images, setImages] = useState<string[]>(() => {
+    // Ensure images are strings, not objects
+    const imgs = product.images ?? []
+    return imgs.map((img: any) => typeof img === 'string' ? img : img.url || img)
+  })
   const [newCategory, setNewCategory] = useState('')
   const [categories, setCategories] = useState<Array<{id: string, name: string}>>([])
 
@@ -238,7 +242,10 @@ function Editor({ product, onCancel, onSave }: { product: Product, onCancel: () 
         <button onClick={onCancel} style={{ marginLeft: 0, minHeight: 40, background: '#fff', color: '#111', border: '1px solid #ddd' }}>Cancel</button>
       </div>
       <div style={{ marginTop: 12 }}>
-        <ImagesManager productId={product.id} images={images} onChange={setImages} />
+        <ImagesManager productId={product.id} images={images} onChange={(newImages) => {
+          console.log('Editor received new images:', newImages)
+          setImages(newImages)
+        }} />
       </div>
     </div>
   )
